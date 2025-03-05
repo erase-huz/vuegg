@@ -8,6 +8,20 @@ RUN apk update && apk upgrade && \
 
 WORKDIR /app
 
+
+
+RUN apt-get update && apt-get install -y \
+    python2.7 \
+    python-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 2'yi varsayılan Python olarak ayarla
+RUN ln -sf /usr/bin/python2.7 /usr/bin/python
+
+# pip'i güncelleyin
+RUN pip install --upgrade pip
+
 # copy sources
 COPY . /app
 
