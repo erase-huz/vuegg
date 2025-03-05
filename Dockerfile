@@ -1,10 +1,7 @@
-FROM node:9-alpine
+FROM ubuntu:18.04
 
 LABEL maintainer="vuegger@gmail.com"
 
-# install git
-RUN apk update && apk upgrade && \
-    apk add --no-cache bash git openssh
 
 WORKDIR /app
 
