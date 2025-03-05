@@ -1,45 +1,37 @@
-FROM node:16-alpine # Use a more recent LTS Node.js version
+# Use a more recent LTS version of Node.js
+FROM node:20-alpine
 
 LABEL maintainer="vuegger@gmail.com"
 
-# Install system dependencies (combine into a single RUN layer)
-RUN apk update && apk upgrade && \
-    apk add --no-cache \
+# Install necessary system dependencies
+RUN apk add --no-cache \
     bash \
     git \
     openssh \
-    python3 \  # Use python3 instead of python2 (python2 is deprecated)
+    python3 \
     py3-pip \
-    alpine-sdk \
-    gcc \
-    make \
-    curl \
-    && rm -rf /var/cache/apk/* # Clean up apk cache
+    build-base \
+    curl
 
 WORKDIR /app
 
 # Copy package.json and package-lock.json first for better caching
-COPY package*.json ./
+COPY package.json package-lock.json ./
+RUN npm install --frozen-lockfile
 
-# Set npm configurations (can be done in a single line)
-RUN npm config set registry https://registry.npmjs.org/ && npm config set network-timeout 600000
+# Copy project files
+COPY . /app
 
-# Install dependencies (use a single command)
-RUN npm install --legacy-peer-deps # Consider removing --legacy-peer-deps if possible
+# Install client dependencies and build the client
+WORKDIR /app/client
+RUN npm install --frozen-lockfile && npm run build
 
-# Copy the rest of the application code
-COPY . .
+# Move back to root and build the main app
+WORKDIR /app
+RUN npm run build
 
-# Build client (only if necessary - depends on your project structure)
-RUN if [ -d "client" ]; then \
-      cd client && \
-      npm run build; \
-    fi
-
-# Build root project (likely unnecessary if you already built in the previous step)
-# Consider if this step is actually needed. If the client build produces the final output, this might be redundant.
-# RUN npm run build  # Remove this if the client build handles everything
-
+# Expose the required port
 EXPOSE 8080
 
+# Start the application
 CMD ["npm", "run", "start"]
